@@ -192,16 +192,32 @@ def admin_dashboard(request):
     
     total_students, performance_counts, dept_stats = get_institutional_metrics()
     
-    # Load ML metrics
+    # Load ML metrics and pre-calculate percentages
     metrics_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ml', 'models', 'metrics.json')
     ml_metrics = {}
     if os.path.exists(metrics_path):
         with open(metrics_path, 'r') as f:
-            ml_metrics = json.load(f)
+            raw_metrics = json.load(f)
+            for name, metrics in raw_metrics.items():
+                acc = metrics.get('accuracy') or metrics.get('precision') or 0
+                ml_metrics[name] = {
+                    'accuracy': f"{acc*100:.1f}%",
+                    'precision': f"{metrics.get('precision', 0)*100:.1f}%",
+                    'recall': f"{metrics.get('recall', 0)*100:.1f}%",
+                    'f1_score': f"{metrics.get('f1_score', 0)*100:.1f}%",
+                    'precision_raw': metrics.get('precision', 0) * 100
+                }
             
+    # Calculate percentages for Risk Matrix
+    total_perf = sum(performance_counts.values()) or 1
+    performance_percentages = {
+        k: (v / total_perf) * 100 for k, v in performance_counts.items()
+    }
+
     context = {
         'total_students': total_students,
         'performance_counts': performance_counts,
+        'performance_percentages': performance_percentages,
         'at_risk_count': performance_counts['at_risk'],
         'dept_stats': dept_stats,
         'ml_metrics': ml_metrics

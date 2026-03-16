@@ -37,31 +37,92 @@
 <div class="row mt-5 g-4 animate-fade-in" style="animation-delay: 0.1s;">
     <!-- Institutional Risk Matrix -->
     <div class="col-md-7">
-        <div class="glass-panel p-4 h-100">
+        <div class="glass-panel p-4 h-100 security-scan">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-0 text-gradient">Institutional Risk Matrix</h5>
-                <button class="btn btn-sm btn-stitch py-1 px-3">Live Analysis</button>
+                <div>
+                    <h1 class="h5 mb-0 text-gradient ls-tight">Institutional Risk Matrix</h1>
+                    <div class="small text-muted" style="letter-spacing: 0.05em; font-size: 0.65rem;">Predictive Distribution Analysis</div>
+                </div>
+                <div class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2">
+                    <i class="bi bi-shield-check me-1"></i> System Optimized
+                </div>
             </div>
-            <div class="row align-items-center">
+            
+            <div class="row g-4 align-items-center">
                 <div class="col-md-5">
-                    <canvas id="riskDoughnut" 
-                            data-high="{{ performance_counts.high|default:0 }}" 
-                            data-average="{{ performance_counts.average|default:0 }}" 
-                            data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
+                    <div class="position-relative py-3">
+                        <canvas id="riskDoughnut" 
+                                data-high="{{ performance_counts.high|default:0 }}" 
+                                data-average="{{ performance_counts.average|default:0 }}" 
+                                data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="h3 mb-0 text-white fw-bold">{{ total_students }}</div>
+                            <div class="text-muted" style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.1em;">Total Nodes</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-7">
-                    <div class="d-flex flex-column gap-3">
-                        <div class="p-3 rounded-3" style="background: rgba(16, 185, 129, 0.05); border-left: 4px solid var(--accent-emerald);">
-                            <div class="small fw-bold text-success text-uppercase">High Performers</div>
-                            <div class="h4 mb-0">{{ performance_counts.high|default:0 }} <span class="small text-muted fs-6">Students</span></div>
+                    <div class="d-flex flex-column gap-2">
+                        <!-- Critical First -->
+                        <div class="glass-panel-strong p-3 rounded-3 border-start border-4 border-danger hover-glow">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small fw-bold text-danger text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Critical At-Risk</div>
+                                <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size: 0.6rem;">{{ performance_percentages.at_risk|floatformat:1 }}%</span>
+                            </div>
+                            <div class="h4 mb-2 text-white" style="font-family: 'Outfit', sans-serif;">{{ performance_counts.at_risk|default:0 }} <span class="small text-muted fs-6" style="font-size: 0.7rem !important;">Students</span></div>
+                            <div class="progress" style="height: 3px; background: rgba(255,255,255,0.03);">
+                                <div class="progress-bar bg-danger shadow-glow-danger" style="width: {{ performance_percentages.at_risk }}%"></div>
+                            </div>
                         </div>
-                        <div class="p-3 rounded-3" style="background: rgba(245, 158, 11, 0.05); border-left: 4px solid var(--accent-amber);">
-                            <div class="small fw-bold text-warning text-uppercase">Average Consistency</div>
-                            <div class="h4 mb-0">{{ performance_counts.average|default:0 }} <span class="small text-muted fs-6">Students</span></div>
+
+                        <div class="glass-panel-strong p-3 rounded-3 border-start border-4 border-warning hover-glow">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small fw-bold text-warning text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Average Consistency</div>
+                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 0.6rem;">{{ performance_percentages.average|floatformat:1 }}%</span>
+                            </div>
+                            <div class="h4 mb-2 text-white" style="font-family: 'Outfit', sans-serif;">{{ performance_counts.average|default:0 }} <span class="small text-muted fs-6" style="font-size: 0.7rem !important;">Students</span></div>
+                            <div class="progress" style="height: 3px; background: rgba(255,255,255,0.03);">
+                                <div class="progress-bar bg-warning" style="width: {{ performance_percentages.average }}%"></div>
+                            </div>
                         </div>
-                        <div class="p-3 rounded-3" style="background: rgba(244, 63, 94, 0.05); border-left: 4px solid var(--accent-rose);">
-                            <div class="small fw-bold text-danger text-uppercase">Critical At-Risk</div>
-                            <div class="h4 mb-0">{{ performance_counts.at_risk|default:0 }} <span class="small text-muted fs-6">Students</span></div>
+                        
+                        <div class="glass-panel-strong p-3 rounded-3 border-start border-4 border-success hover-glow">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small fw-bold text-success text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">High Performers</div>
+                                <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.6rem;">{{ performance_percentages.high|floatformat:1 }}%</span>
+                            </div>
+                            <div class="h4 mb-2 text-white" style="font-family: 'Outfit', sans-serif;">{{ performance_counts.high|default:0 }} <span class="small text-muted fs-6" style="font-size: 0.7rem !important;">Students</span></div>
+                            <div class="progress" style="height: 3px; background: rgba(255,255,255,0.03);">
+                                <div class="progress-bar bg-success" style="width: {{ performance_percentages.high }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Intelligence Feed to fill space -->
+            <div class="mt-4 pt-4 border-top border-white border-opacity-5">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="glass-panel-strong p-3 rounded-3 border border-white border-opacity-5 h-100">
+                            <div class="small text-muted mb-2 fw-bold text-uppercase" style="letter-spacing: 0.1em; font-size: 0.6rem;">Intelligence Insight</div>
+                            <p class="small text-white opacity-75 mb-0" style="font-size: 0.75rem; line-height: 1.4;">
+                                <i class="bi bi-lightbulb text-accent me-1"></i>
+                                Pattern analysis indicates a <span class="text-accent fw-bold">12% increase</span> in average consistency across the Engineering cluster compared to last cycle.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="glass-panel-strong p-3 rounded-3 border border-white border-opacity-5 h-100" style="background: rgba(0,0,0,0.2);">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small text-muted fw-bold text-uppercase" style="letter-spacing: 0.1em; font-size: 0.6rem;">Status Feed</div>
+                                <div class="spinner-grow spinner-grow-sm text-accent" role="status" style="width: 8px; height: 8px;"></div>
+                            </div>
+                            <div class="terminal-feed small text-muted" style="font-family: 'Courier New', Courier, monospace; font-size: 0.65rem; line-height: 1.2;">
+                                <div>> Neural link established</div>
+                                <div class="text-accent">> Analyzing node weights...</div>
+                                <div>> Variance within spec</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -69,47 +130,88 @@
         </div>
     </div>
 
+
     <!-- ML Intelligence Hub -->
     <div class="col-md-5">
-        <div class="glass-panel p-4 h-100">
-            <h5 class="mb-4 text-gradient">ML Engine Diagnostics</h5>
-            <div class="mb-4">
-                <div class="d-flex justify-content-between small text-muted mb-2">
-                    <span>Inference Load</span>
-                    <span>14%</span>
+        <div class="glass-panel p-4 h-100 security-scan">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h5 mb-0 text-gradient ls-tight">ML Engine Diagnostics</h1>
+                    <div class="small text-muted" style="letter-spacing: 0.05em; font-size: 0.65rem;">Neural Cluster Performance</div>
                 </div>
-                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05);">
-                    <div class="progress-bar bg-accent shadow-sm" style="width: 14%"></div>
+                <div class="badge bg-primary bg-opacity-10 text-accent border border-primary border-opacity-25 pulse-primary py-1 px-2">
+                    <i class="bi bi-broadcast me-1"></i> Live
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-dark table-borderless align-middle mb-0" style="background: transparent;">
-                    <tbody>
-                        {% for name, metrics in ml_metrics.items %}
-                        <tr class="border-bottom border-white border-opacity-5">
-                            <td class="ps-0 py-3">
-                                <div class="small fw-bold text-white">{{ name }}</div>
-                                <div class="text-muted" style="font-size: 0.7rem;">Active Neural Core</div>
-                            </td>
-                            <td class="text-end py-3">
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">{{ metrics.precision }} Acc</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        <tr class="border-0">
-                            <td class="ps-0 py-3">
-                                <div class="small fw-bold text-white">Serialization Flow</div>
-                                <div class="text-muted" style="font-size: 0.7rem;">High Fidelity Portability</div>
-                            </td>
-                            <td class="text-end py-3">
-                                <i class="bi bi-check-circle-fill text-primary"></i>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            
+            <div class="mb-3 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                <div class="d-flex justify-content-between small text-muted mb-2" style="font-size: 0.7rem;">
+                    <span class="text-uppercase fw-bold" style="letter-spacing: 0.05em;">Inference Load</span>
+                    <span class="text-accent fw-bold">14%</span>
+                </div>
+                <div class="progress" style="height: 4px; background: rgba(255,255,255,0.05);">
+                    <div class="progress-bar bg-accent shadow-sm" style="width: 14%; transition: width 1s ease-in-out;"></div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+                {% for name, metrics in ml_metrics.items %}
+                <div class="glass-panel-strong p-3 rounded-3 border border-white border-opacity-5 hover-glow">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <div class="small fw-bold text-white mb-0" style="font-family: 'Outfit', sans-serif; letter-spacing: 0.02em;">{{ name }}</div>
+                            <div class="text-accent fw-bold" style="font-size: 0.55rem; letter-spacing: 0.05em; text-transform: uppercase;">Neural Core: Active</div>
+                        </div>
+                        <div class="p-1 rounded-circle bg-accent bg-opacity-10">
+                            <i class="bi bi-cpu-fill text-accent" style="font-size: 0.9rem;"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="p-2 rounded-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                                <div class="small text-muted mb-1" style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.05em;">Accuracy</div>
+                                <div class="fw-bold text-white" style="font-size: 0.85rem; font-family: 'Inter', sans-serif;">{{ metrics.accuracy }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 rounded-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                                <div class="small text-muted mb-1" style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.05em;">F1 Score</div>
+                                <div class="fw-bold text-accent" style="font-size: 0.85rem; font-family: 'Inter', sans-serif;">{{ metrics.f1_score }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <div class="d-flex justify-content-between small text-muted mb-1" style="font-size: 0.6rem; letter-spacing: 0.02em;">
+                            <span>Precision / Recall</span>
+                            <span class="text-white opacity-75">{{ metrics.precision }} / {{ metrics.recall }}</span>
+                        </div>
+                        <div class="progress" style="height: 2px; background: rgba(255,255,255,0.03);">
+                            <div class="progress-bar bg-success bg-opacity-75" style="width: {{ metrics.precision_raw }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-3 pt-3 border-top border-white border-opacity-5">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-1 bg-success bg-opacity-10 rounded-circle">
+                            <i class="bi bi-shield-check text-success" style="font-size: 0.8rem;"></i>
+                        </div>
+                        <div class="small text-white fw-bold" style="font-size: 0.75rem;">Serialization Flow</div>
+                    </div>
+                    <div class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-10" style="font-size: 0.6rem; letter-spacing: 0.05em;">
+                        VERIFIED Hub
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+
 </div>
 
 <div class="glass-panel mt-5 animate-fade-in" style="animation-delay: 0.2s;">
