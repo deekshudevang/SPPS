@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block page_title %}Predictive Data Ingestion{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-in">
+    <div class="col-md-10 col-lg-8">
+        <div class="glass-panel p-5">
+            <h4 class="text-gradient fw-bold mb-2">Predictive Data Ingestion</h4>
+            <p class="text-white opacity-50 mb-5">Input verified student performance metrics for neural inference. Accuracy is critical for predictive fidelity.</p>
+            
+            <form method="POST" class="premium-form">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label class="form-label text-muted fs-xs text-uppercase ls-wide">Target Student Profile</label>
+                        <select name="student_id" class="form-select bg-dark border-white border-opacity-10 text-white rounded-3 shadow-none focus-primary" required>
+                            <option value="" disabled selected>Select from institutional registry...</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}">{{ student.user.get_full_name }} ({{ student.department }} | ID: {{ student.id }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fs-xs text-uppercase ls-wide">Attendance Index (%)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-white border-opacity-10 text-muted"><i class="bi bi-person-check-fill"></i></span>
+                            <input type="number" step="0.1" name="attendance" class="form-control bg-dark border-white border-opacity-10 text-white focus-primary" placeholder="0 - 100" required>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fs-xs text-uppercase ls-wide">Study Intensity (Daily Hours)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-white border-opacity-10 text-muted"><i class="bi bi-clock-history"></i></span>
+                            <input type="number" step="0.1" name="study_hours" class="form-control bg-dark border-white border-opacity-10 text-white focus-primary" placeholder="Avg daily investment" required>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label text-muted fs-xs text-uppercase ls-wide">Internal Benchmark (Max 50)</label>
+                        <input type="number" step="0.1" name="internal_marks" class="form-control bg-dark border-white border-opacity-10 text-white focus-primary" placeholder="Result/50" required>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label text-muted fs-xs text-uppercase ls-wide">Assignment Velocity (Max 50)</label>
+                        <input type="number" step="0.1" name="assignment_scores" class="form-control bg-dark border-white border-opacity-10 text-white focus-primary" placeholder="Result/50" required>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label text-muted fs-xs text-uppercase ls-wide">Engagement Rating (1-10)</label>
+                        <input type="number" min="1" max="10" name="participation_level" class="form-control bg-dark border-white border-opacity-10 text-white focus-primary" placeholder="Intramural rating" required>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <label class="form-label text-muted fs-xs text-uppercase ls-wide">Historical Standing (%)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-white border-opacity-10 text-muted"><i class="bi bi-journal-check"></i></span>
+                            <input type="number" step="0.1" name="previous_semester_result" class="form-control bg-dark border-white border-opacity-10 text-white focus-primary" placeholder="Last semester GWA/Score" required>
+                        </div>
+                        <div class="form-text text-muted small mt-2">Historical data used for trend consistency validation.</div>
+                    </div>
+                </div>
+                
+                <div class="my-5 border-top border-white border-opacity-5"></div>
+                
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'dashboard_router' %}" class="btn btn-outline-secondary px-4 glass-hover shadow-none">Abort</a>
+                    <button type="submit" class="btn btn-stitch px-5 py-2 fs-6 fw-bold shadow-lg">Execute Analysis & Predict</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

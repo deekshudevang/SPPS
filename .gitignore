@@ -1,0 +1,10 @@
+# Default .gitignore for Django Project
+*.log
+*.pyc
+__pycache__/
+.env
+db.sqlite3-journal
+
+# Keep the following for demo portability:
+# !db.sqlite3
+# !ml/*.pkl

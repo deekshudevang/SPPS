@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block page_title %}Institutional Analytics Hub{% endblock %}
+
+{% block content %}
+<!-- Institutional intelligence Hub Header -->
+<div class="row g-4 mb-5 animate-fade-in">
+    <div class="col-md-12">
+        <div class="glass-panel p-4 border-start border-primary border-4" style="background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0) 100%);">
+            <h4 class="text-gradient fw-bold mb-2">Institutional Intelligence Hub</h4>
+            <p class="text-white opacity-50 mb-0">
+                Deep-dive correlation analysis between student engagement metrics and academic outcomes. 
+                Integrating high-frequency engagement data and historical records for real-time predictive refinement.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 animate-fade-in" style="animation-delay: 0.1s;">
+    <!-- Correlation Scatter Plot -->
+    <div class="col-md-8">
+        <div class="glass-panel p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="mb-1 text-gradient">Engagement-Outcome Vector</h5>
+                    <p class="small text-muted mb-0">Attendance Rate vs. Predicted Academic Success</p>
+                </div>
+                <div class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10">{{ total_analyzed }} Nodes Analyzed</div>
+            </div>
+            <div style="height: 400px;">
+                <canvas id="correlationChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Column -->
+    <div class="col-md-4">
+        <div class="glass-panel p-4 h-100">
+            <h5 class="mb-4 text-gradient">Risk Vulnerability</h5>
+            <div class="mb-5">
+                <p class="small text-white opacity-50 mb-3 text-uppercase fw-bold">At-Risk Students by Attendance</p>
+                {% for bracket, count in risk_brackets.items %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small fw-bold text-muted">{{ bracket }}</span>
+                        <span class="small text-accent">{{ count }} Students</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-rose shadow-sm" style="width: {{ count|add:10 }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div>
+                <p class="small text-white opacity-50 mb-3 text-uppercase fw-bold">Departmental Efficiency</p>
+                {% for dept in dept_stats %}
+                <div class="d-flex align-items-center mb-4">
+                    <div class="flex-shrink-0 p-3 rounded-circle bg-primary bg-opacity-10 border border-primary border-opacity-10 me-3">
+                        <i class="bi bi-building text-accent"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 small fw-bold text-white">{{ dept.department }}</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 4px; background: rgba(255,255,255,0.05);">
+                                <div class="progress-bar bg-emerald" style="width: {{ dept.avg_score }}%"></div>
+                            </div>
+                            <span class="small text-accent fw-bold">{{ dept.avg_score|floatformat:1 }}%</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 g-4 animate-fade-in" style="animation-delay: 0.2s;">
+    <div class="col-md-12">
+        <div class="glass-panel p-4">
+            <h5 class="mb-4 text-gradient">Engagement Dynamics: Study Density vs. Performance</h5>
+            <div style="height: 250px;">
+                <canvas id="engagementChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const correlationData = {{ correlation_json|safe }};
+    const engagementData = {{ engagement_json|safe }};
+
+    // Correlation Scatter Plot
+    new Chart(document.getElementById('correlationChart'), {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Student Correlation',
+                data: correlationData,
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: '#3b82f6',
+                borderWidth: 1,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { 
+                    title: { display: true, text: 'Attendance (%)', color: '#94a3b8' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#64748b' }
+                },
+                y: { 
+                    title: { display: true, text: 'Predicted Score (%)', color: '#94a3b8' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#64748b' },
+                    min: 0,
+                    max: 100
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw.label + ': ' + context.raw.y + '% Score';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Engagement Bar/Line Chart
+    new Chart(document.getElementById('engagementChart'), {
+        type: 'bubble',
+        data: {
+            datasets: [{
+                label: 'Study Intensity',
+                data: engagementData.map(d => ({x: d.x, y: d.y, r: 8})),
+                backgroundColor: 'rgba(16, 185, 129, 0.4)',
+                borderColor: '#10b981',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { 
+                    title: { display: true, text: 'Daily Study Hours', color: '#94a3b8' },
+                    grid: { display: false },
+                    ticks: { color: '#64748b' }
+                },
+                y: { 
+                    title: { display: true, text: 'Performance Impact', color: '#94a3b8' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#64748b' }
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+})();
+</script>
+{% endblock %}

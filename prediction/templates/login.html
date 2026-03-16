@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Secure Authentication{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-5 col-lg-4 animate-fade-in">
+        <div class="glass-panel-strong p-5 box-glow security-scan">
+            <div class="text-center mb-5">
+                <div class="p-4 rounded-circle bg-primary bg-opacity-10 d-inline-block border border-primary border-opacity-10 mb-4 pulse-primary">
+                    <img src="{% static 'institutional_logo.png' %}" width="64" class="shadow-lg rounded-circle" style="filter: brightness(1.2);">
+                </div>
+                <h3 class="text-gradient fw-bold h2">SPPS Fortress</h3>
+                <p class="text-accent fw-bold small mb-0 text-uppercase" style="letter-spacing: 0.15em;">Secure Neural Gateway</p>
+            </div>
+            
+            <div id="login-error" class="alert alert-danger d-none border-0 py-2 small bg-danger bg-opacity-10 text-rose"></div>
+            
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="stat-label d-block mb-2">Neural Identifier</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-person"></i>
+                        </span>
+                        <input type="text" id="username" class="form-control" placeholder="Enter identifier" required>
+                    </div>
+                </div>
+                <div class="mb-5">
+                    <label class="stat-label d-block mb-2">Security Token</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-shield-lock"></i>
+                        </span>
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-stitch w-100 justify-content-center py-3">
+                    <i class="bi bi-lock-fill me-2"></i> Authenticate Registry
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const loginForm = document.getElementById('login-form');
+    if (!loginForm) return;
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const errorDiv = document.getElementById('login-error');
+        const btn = e.target.querySelector('button');
+        
+        if (!usernameInput || !passwordInput || !btn) return;
+
+        const username = usernameInput.value;
+        const password = passwordInput.value;
+        
+        btn.disabled = true;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span>Verifying Integrity...</span> <div class="spinner-border spinner-border-sm" role="status"></div>';
+        
+        try {
+            const response = await fetch('/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'success') {
+                window.location.href = '/';
+            } else {
+                errorDiv.textContent = data.message;
+                errorDiv.classList.remove('d-none');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        } catch (err) {
+            errorDiv.textContent = "Secure connection failure. Verify network status.";
+            errorDiv.classList.remove('d-none');
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    });
+})();
+</script>
+{% endblock %}

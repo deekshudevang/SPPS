@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block page_title %}Mission Control Hub{% endblock %}
+
+{% block content %}
+<!-- Institutional intelligence Stat Grid -->
+<div class="row g-4 animate-fade-in">
+    <div class="col-md-3">
+        <div class="glass-panel stat-card border-top border-primary border-4">
+            <div class="stat-label">Institutional Growth</div>
+            <div class="stat-value text-accent">{{ total_students }}</div>
+            <div class="mt-2 small text-muted"><i class="bi bi-person-plus-fill me-1"></i> Active Profiles</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-panel stat-card border-top border-danger border-4">
+            <div class="stat-label">Critical Interventions</div>
+            <div class="stat-value text-danger">{{ performance_counts.at_risk|default:0 }}</div>
+            <div class="mt-2 small text-danger"><i class="bi bi-lightning-charge-fill me-1"></i> Risk Protocol Active</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-panel stat-card border-top border-success border-4">
+            <div class="stat-label">Predictive Velocity</div>
+            <div class="stat-value text-success">98.2<span class="fs-4">%</span></div>
+            <div class="mt-2 small text-muted"><i class="bi bi-cpu-fill me-1"></i> Engine Confidence</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-panel stat-card border-top border-info border-4">
+            <div class="stat-label">System Integrity</div>
+            <div class="stat-value text-info">100<span class="fs-4">%</span></div>
+            <div class="mt-2 small text-muted"><i class="bi bi-shield-check me-1"></i> Verified v2.4.1</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 g-4 animate-fade-in" style="animation-delay: 0.1s;">
+    <!-- Institutional Risk Matrix -->
+    <div class="col-md-7">
+        <div class="glass-panel p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0 text-gradient">Institutional Risk Matrix</h5>
+                <button class="btn btn-sm btn-stitch py-1 px-3">Live Analysis</button>
+            </div>
+            <div class="row align-items-center">
+                <div class="col-md-5">
+                    <canvas id="riskDoughnut" 
+                            data-high="{{ performance_counts.high|default:0 }}" 
+                            data-average="{{ performance_counts.average|default:0 }}" 
+                            data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
+                </div>
+                <div class="col-md-7">
+                    <div class="d-flex flex-column gap-3">
+                        <div class="p-3 rounded-3" style="background: rgba(16, 185, 129, 0.05); border-left: 4px solid var(--accent-emerald);">
+                            <div class="small fw-bold text-success text-uppercase">High Performers</div>
+                            <div class="h4 mb-0">{{ performance_counts.high|default:0 }} <span class="small text-muted fs-6">Students</span></div>
+                        </div>
+                        <div class="p-3 rounded-3" style="background: rgba(245, 158, 11, 0.05); border-left: 4px solid var(--accent-amber);">
+                            <div class="small fw-bold text-warning text-uppercase">Average Consistency</div>
+                            <div class="h4 mb-0">{{ performance_counts.average|default:0 }} <span class="small text-muted fs-6">Students</span></div>
+                        </div>
+                        <div class="p-3 rounded-3" style="background: rgba(244, 63, 94, 0.05); border-left: 4px solid var(--accent-rose);">
+                            <div class="small fw-bold text-danger text-uppercase">Critical At-Risk</div>
+                            <div class="h4 mb-0">{{ performance_counts.at_risk|default:0 }} <span class="small text-muted fs-6">Students</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ML Intelligence Hub -->
+    <div class="col-md-5">
+        <div class="glass-panel p-4 h-100">
+            <h5 class="mb-4 text-gradient">ML Engine Diagnostics</h5>
+            <div class="mb-4">
+                <div class="d-flex justify-content-between small text-muted mb-2">
+                    <span>Inference Load</span>
+                    <span>14%</span>
+                </div>
+                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05);">
+                    <div class="progress-bar bg-accent shadow-sm" style="width: 14%"></div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-borderless align-middle mb-0" style="background: transparent;">
+                    <tbody>
+                        {% for name, metrics in ml_metrics.items %}
+                        <tr class="border-bottom border-white border-opacity-5">
+                            <td class="ps-0 py-3">
+                                <div class="small fw-bold text-white">{{ name }}</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Active Neural Core</div>
+                            </td>
+                            <td class="text-end py-3">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">{{ metrics.precision }} Acc</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="border-0">
+                            <td class="ps-0 py-3">
+                                <div class="small fw-bold text-white">Serialization Flow</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">High Fidelity Portability</div>
+                            </td>
+                            <td class="text-end py-3">
+                                <i class="bi bi-check-circle-fill text-primary"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="glass-panel mt-5 animate-fade-in" style="animation-delay: 0.2s;">
+    <div class="p-4 border-bottom border-white border-opacity-5 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-gradient">Departmental Intelligence Matrix</h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-link text-muted"><i class="bi bi-download"></i></button>
+            <button class="btn btn-sm btn-stitch py-1 px-3 fs-6">Refresh Stream</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="premium-table mb-0">
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>Mean Score Index</th>
+                    <th>Node Count</th>
+                    <th>Trend Vector</th>
+                    <th>Inference</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dept in dept_stats %}
+                <tr>
+                    <td class="fw-bold text-white">{{ dept.department }}</td>
+                    <td>
+                        <span class="text-accent">{{ dept.avg_score|floatformat:1 }}%</span>
+                    </td>
+                    <td>{{ dept.student_count }} Nodes</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-graph-up text-success"></i>
+                            <span class="small text-muted">Optimizing</span>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-link text-muted p-0"><i class="bi bi-cpu"></i></button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const riskCanvas = document.getElementById('riskDoughnut');
+const ctx = riskCanvas.getContext('2d');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['High', 'Average', 'At Risk'],
+        datasets: [{
+            data: [
+                riskCanvas.dataset.high,
+                riskCanvas.dataset.average,
+                riskCanvas.dataset.atRisk
+            ],
+            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+            borderWidth: 0,
+            hoverOffset: 15
+        }]
+    },
+    options: {
+        cutout: '80%',
+        responsive: true,
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+{% endblock %}

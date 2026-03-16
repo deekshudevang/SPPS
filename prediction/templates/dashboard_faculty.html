@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block page_title %}Faculty Hub{% endblock %}
+
+{% block content %}
+<!-- Institutional intelligence Stat Grid -->
+<div class="row g-4 animate-fade-in">
+    <div class="col-md-3">
+        <div class="glass-panel stat-card border-top border-primary border-4">
+            <div class="stat-label">Student Cohort</div>
+            <div class="stat-value text-accent">{{ total_students }}</div>
+            <div class="mt-2 small text-muted">Active enrollments</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-panel stat-card border-top border-rose border-4">
+            <div class="stat-label">At Risk Detection</div>
+            <div class="stat-value text-danger">{{ performance_counts.at_risk|default:0 }}</div>
+            <div class="mt-2 small text-danger"><i class="bi bi-shield-exclamation me-1"></i> Critical Monitoring</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-panel stat-card border-top border-emerald border-4">
+            <div class="stat-label">High Fidelity</div>
+            <div class="stat-value text-success">{{ performance_counts.high|default:0 }}</div>
+            <div class="mt-2 small text-muted">Peak performance</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-panel stat-card border-top border-warning border-4">
+            <div class="stat-label">Avg Consistency</div>
+            <div class="stat-value text-warning">{{ performance_counts.average|default:0 }}</div>
+            <div class="mt-2 small text-muted">Baseline stable</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 g-4 animate-fade-in" style="animation-delay: 0.1s;">
+    <!-- Performance Intelligence Matrix -->
+    <div class="col-md-8">
+        <div class="glass-panel h-100 overflow-hidden">
+            <div class="p-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-gradient">Class Intelligence Matrix</h5>
+                <a href="{% url 'add_record' %}" class="btn btn-stitch btn-sm"><i class="bi bi-plus-lg"></i> Intake Data</a>
+            </div>
+            <div class="table-responsive">
+                <table class="premium-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Institutional Profile</th>
+                            <th>Risk Vector</th>
+                            <th>Predicted Index</th>
+                            <th class="text-end">Action Intelligence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pred in predictions %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://ui-avatars.com/api/?name={{ pred.student.user.username }}&background=rgba(59,130,246,0.1)&color=3b82f6" class="rounded-circle me-3" width="36">
+                                    <div>
+                                        <div class="fw-bold text-white">{{ pred.student.user.get_full_name }}</div>
+                                        <div class="small text-muted">{{ pred.student.student_id }} | {{ pred.student.department }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="risk-badge risk-{{ pred.risk_level }}">{{ pred.get_risk_level_display }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-accent">{{ pred.predicted_score|floatformat:1 }}%</div>
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-link text-muted p-0 me-3" onclick="runPredict({{ pred.student.id }})" title="Recalibrate Prediction">
+                                    <i class="bi bi-cpu fs-5"></i>
+                                </button>
+                                <a href="{% url 'analytics' %}" class="btn btn-link text-muted p-0">
+                                    <i class="bi bi-arrow-right-circle fs-5"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytic Distribution -->
+    <div class="col-md-4">
+        <div class="glass-panel p-4 h-100">
+            <h5 class="mb-4 text-gradient">Institutional Distribution</h5>
+            <div style="height: 280px;">
+                <canvas id="riskChart" 
+                        data-high="{{ performance_counts.high|default:0 }}" 
+                        data-average="{{ performance_counts.average|default:0 }}" 
+                        data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
+            </div>
+            <div class="mt-5">
+                <div class="p-3 mb-3 glass-panel" style="background: rgba(255,255,255,0.02);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small fw-bold text-muted">Engagement Index</span>
+                        <span class="small text-accent">85%</span>
+                    </div>
+                    <div class="progress" style="height: 4px; background: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-accent" style="width: 85%"></div>
+                    </div>
+                </div>
+                <div class="p-3 glass-panel" style="background: rgba(255,255,255,0.02);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small fw-bold text-muted">Attendance Vector</span>
+                        <span class="small text-success">92%</span>
+                    </div>
+                    <div class="progress" style="height: 4px; background: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-success" style="width: 92%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function runPredict(studentId) {
+    const res = await fetch(`/predict/${studentId}/`);
+    const data = await res.json();
+    if (data.status === 'success') {
+        location.reload();
+    }
+}
+
+const riskCanvas = document.getElementById('riskChart');
+const ctx = riskCanvas.getContext('2d');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['High', 'Average', 'At Risk'],
+        datasets: [{
+            data: [
+                riskCanvas.dataset.high,
+                riskCanvas.dataset.average,
+                riskCanvas.dataset.atRisk
+            ],
+            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+            borderWidth: 0,
+            hoverOffset: 15
+        }]
+    },
+    options: {
+        cutout: '80%',
+        responsive: true,
+        plugins: { 
+            legend: { 
+                display: true,
+                position: 'bottom',
+                labels: { color: '#94a3b8', padding: 20, usePointStyle: true }
+            } 
+        }
+    }
+});
+</script>
+{% endblock %}

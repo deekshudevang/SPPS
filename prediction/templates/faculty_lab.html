@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block title %}SPPS | Predictive Simulation Lab{% endblock %}
+{% block page_title %}Predictive Simulation Lab{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-5 animate-fade-in">
+    <div class="col-md-12">
+        <div class="glass-panel p-4 border-start border-emerald border-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0) 100%);">
+            <h4 class="text-gradient fw-bold mb-2">Neural Risk Simulator</h4>
+            <p class="text-white opacity-50 mb-0">
+                Adjust parameters to simulate potential student trajectories. This interactive lab leverages production-grade 
+                neuro-inference to predict outcomes and validate intervention strategies in real-time.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 animate-fade-in" style="animation-delay: 0.1s;">
+    <!-- Simulator Controls -->
+    <div class="col-md-7">
+        <div class="glass-panel p-4">
+            <h5 class="mb-4 text-gradient">Simulation Input Vectors</h5>
+            <form id="simForm">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label fs-xs text-uppercase ls-wide text-muted fw-bold">Attendance Velocity (%)</label>
+                        <input type="range" class="form-range stitch-range" id="attendance" value="85" min="0" max="100">
+                        <div class="d-flex justify-content-between mt-1"><span class="small text-accent fw-bold" id="attendanceVal">85%</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fs-xs text-uppercase ls-wide text-muted fw-bold">Study Density (Daily Hrs)</label>
+                        <input type="range" class="form-range stitch-range" id="study_hours" value="4" min="0" max="15" step="0.5">
+                        <div class="d-flex justify-content-between mt-1"><span class="small text-accent fw-bold" id="studyHoursVal">4 hrs</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fs-xs text-uppercase ls-wide text-muted fw-bold">Internal Benchmark (Max 50)</label>
+                        <input type="range" class="form-range stitch-range" id="internal_marks" value="35" min="0" max="50">
+                        <div class="d-flex justify-content-between mt-1"><span class="small text-accent fw-bold" id="internalMarksVal">35</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fs-xs text-uppercase ls-wide text-muted fw-bold">Assignment Score (Max 50)</label>
+                        <input type="range" class="form-range stitch-range" id="assignment_scores" value="40" min="0" max="50">
+                        <div class="d-flex justify-content-between mt-1"><span class="small text-accent fw-bold" id="assignmentScoresVal">40</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fs-xs text-uppercase ls-wide text-muted fw-bold">Engagement Index (1-10)</label>
+                        <input type="range" class="form-range stitch-range" id="participation_level" value="7" min="1" max="10">
+                        <div class="d-flex justify-content-between mt-1"><span class="small text-accent fw-bold" id="participationVal">7/10</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fs-xs text-uppercase ls-wide text-muted fw-bold">Historical standing (%)</label>
+                        <input type="range" class="form-range stitch-range" id="prev_result" value="75" min="0" max="100">
+                        <div class="d-flex justify-content-between mt-1"><span class="small text-accent fw-bold" id="prevResultVal">75%</span></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Live Prediction Result -->
+    <div class="col-md-5">
+        <div class="glass-panel p-4 h-100 text-center d-flex flex-column justify-content-center align-items-center box-glow">
+            <h5 class="mb-4 text-muted fs-xs text-uppercase ls-wide fw-bold">Neural Inference Output</h5>
+            <div id="riskIndicator" class="mb-3 display-3 fw-bold transition-all" style="color: var(--accent-primary);">
+                --
+            </div>
+            <div class="badge px-4 py-2 mb-4 rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" id="riskBadge">Initializing Hub...</div>
+            
+            <div class="w-100 p-4 rounded-4" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+                <p class="small text-white opacity-50 mb-3 text-uppercase fw-bold ls-wide" style="font-size: 0.65rem;">Simulation Strategy Insight</p>
+                <div id="simRec" class="small text-muted" style="line-height: 1.6;">
+                    Manipulate input vectors to initiate neural simulation...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const simInputs = ['attendance', 'study_hours', 'internal_marks', 'assignment_scores', 'participation_level', 'prev_result'];
+    const displayIds = {
+        attendance: 'attendanceVal',
+        study_hours: 'studyHoursVal',
+        internal_marks: 'internalMarksVal',
+        assignment_scores: 'assignmentScoresVal',
+        participation_level: 'participationVal',
+        prev_result: 'prevResultVal'
+    };
+
+    const unitMap = {
+        attendance: '%',
+        study_hours: ' hrs',
+        participation_level: '/10',
+        prev_result: '%'
+    };
+
+    async function updateSimulation() {
+        const data = {
+            attendance: document.getElementById('attendance').value,
+            study_hours: document.getElementById('study_hours').value,
+            internal_marks: document.getElementById('internal_marks').value,
+            assignment_scores: document.getElementById('assignment_scores').value,
+            participation_level: document.getElementById('participation_level').value,
+            previous_semester_result: document.getElementById('prev_result').value,
+        };
+
+        // Update displays
+        Object.keys(data).forEach(k => {
+            let displayId = displayIds[k === 'previous_semester_result' ? 'prev_result' : k];
+            if(displayId) {
+                document.getElementById(displayId).innerText = data[k] + (unitMap[k === 'previous_semester_result' ? 'prev_result' : k] || '');
+            }
+        });
+
+        try {
+            const response = await fetch('{% url "faculty_lab" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            
+            if(result.status === 'success') {
+                const riskEl = document.getElementById('riskIndicator');
+                const badgeEl = document.getElementById('riskBadge');
+                const recEl = document.getElementById('simRec');
+                
+                riskEl.innerText = result.score + '%';
+                recEl.innerText = result.recommendation;
+                
+                // Class & Color management
+                badgeEl.className = 'badge px-4 py-2 mb-4 rounded-pill border';
+                if(result.risk_level === 'at_risk') {
+                    riskEl.style.color = 'var(--accent-rose)';
+                    badgeEl.innerText = 'CRITICAL RISK';
+                    badgeEl.classList.add('bg-danger', 'bg-opacity-10', 'text-rose', 'border-danger', 'border-opacity-10');
+                } else if(result.risk_level === 'high') {
+                    riskEl.style.color = 'var(--accent-emerald)';
+                    badgeEl.innerText = 'ELITE / OPTIMAL';
+                    badgeEl.classList.add('bg-success', 'bg-opacity-10', 'text-emerald', 'border-success', 'border-opacity-10');
+                } else {
+                    riskEl.style.color = 'var(--accent-primary)';
+                    badgeEl.innerText = 'STABLE BASELINE';
+                    badgeEl.classList.add('bg-primary', 'bg-opacity-10', 'text-primary', 'border-primary', 'border-opacity-10');
+                }
+            }
+        } catch(err) {
+            console.error('Simulation error:', err);
+        }
+    }
+
+    // Attach listeners
+    simInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', updateSimulation);
+    });
+
+    // Initial run
+    updateSimulation();
+})();
+</script>
+{% endblock %}
