@@ -1,3 +1,8 @@
+"""
+EduPredict Intelligence Engine - Core Views
+Author: Portfolio Upgrade
+Description: Handles authentication, institutional metrics, and neural prediction logic.
+"""
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -10,6 +15,7 @@ from .predictor import Predictor
 import json
 import os
 
+# Initialize AI Predictor
 predictor = Predictor()
 
 
@@ -38,42 +44,50 @@ def logout_view(request):
 
 @login_required
 def add_record(request):
+    """
+    Handles the intake of new academic data and triggers an automatic 
+    AI prediction upon successful save.
+    """
     if request.user.role not in ['teacher', 'admin']:
         return redirect('dashboard_router')
     
     if request.method == 'POST':
-        # SaaS: Check student limit
+        # SaaS Multi-tenancy: Check student enrollment limits
         if not request.user.is_pro:
             count = Student.objects.filter(creator=request.user).count()
             if count >= request.user.get_student_limit():
-                return HttpResponse("Student limit reached for Free plan. Upgrade to Pro for more.", status=403)
+                return HttpResponse("SaaS Status: Student limit reached for Free plan. Please upgrade to Pro.", status=403)
         
         try:
             student_id = request.POST.get('student_id')
             student = Student.objects.get(id=student_id, creator=request.user)
             
-            record = AcademicRecord.objects.create(
-                student=student,
-                attendance=float(request.POST.get('attendance')),
-                internal_marks=float(request.POST.get('internal_marks')),
-                assignment_scores=float(request.POST.get('assignment_scores')),
-                participation_level=int(request.POST.get('participation_level')),
-                study_hours=float(request.POST.get('study_hours')),
-                previous_semester_result=float(request.POST.get('previous_semester_result'))
-            )
+            # Extract data from POST
+            data = {
+                'attendance': float(request.POST.get('attendance', 0)),
+                'internal_marks': float(request.POST.get('internal_marks', 0)),
+                'assignment_scores': float(request.POST.get('assignment_scores', 0)),
+                'participation_level': int(request.POST.get('participation_level', 0)),
+                'study_hours': float(request.POST.get('study_hours', 0)),
+                'previous_semester_result': float(request.POST.get('previous_semester_result', 0))
+            }
+
+            # Persist raw record
+            record = AcademicRecord.objects.create(student=student, **data)
             
-            # Automatically trigger prediction after adding record
-            result_risk, result_score = predictor.predict(record)
+            # Predict outcome via Neural Engine
+            result = predictor.predict(data)
             
-            # Create a new prediction linked to the SPECIFIC record created
+            # Persist and link prediction result
             prediction = Prediction.objects.create(
                 student=student,
                 academic_record=record,
-                predicted_score=result_score,
-                risk_level=result_risk
+                predicted_score=result['predicted_score'],
+                risk_level=result['risk_level']
             )
             
-            recommendation_text = predictor.get_recommendation(result_score)
+            # Generate AI-driven recommendation
+            recommendation_text = predictor.get_recommendation(result['predicted_score'])
             feedback = Feedback.objects.create(
                 student=student,
                 prediction=prediction,
@@ -85,9 +99,11 @@ def add_record(request):
                 'feedback': feedback
             })
         except Student.DoesNotExist:
-            return HttpResponse("Error: Student not found.", status=404)
+            return HttpResponse("Error: Critical Student ID mismatch.", status=404)
+        except ValueError as e:
+            return HttpResponse(f"Input Error: Invalid numeric data provided. {e}", status=400)
         except Exception as e:
-            return HttpResponse(f"Error saving record: {e}", status=400)
+            return HttpResponse(f"System Error: Failed to generate prediction. {e}", status=500)
             
     students = Student.objects.filter(creator=request.user)
     return render(request, 'add_record.html', {'students': students})

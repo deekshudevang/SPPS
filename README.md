@@ -52,13 +52,26 @@ EduPredict/
    python manage.py runserver
    ```
 
-## 📊 ML Architecture
-**Algorithm:** Random Forest Classifier
+## 📊 ML Architecture & AI Insights
+**Algorithm:** Random Forest Classifier within a Scikit-Learn Pipeline.
 **Inference Flow:** 
-Academic Record -> Scaler -> Neural Model -> Label Decoder -> Risk Classification -> AI Recommendation Engine
+Academic Record -> Standard Scaler -> Unified Neural Model -> Label Decoder -> Multi-Tier Risk Classification -> AI-Powered Recommendation Engine
 
-## 📸 Dashboard Preview
-![Mission Control](docs/dashboard.png)
+**Key Performance Indicators (KPIs):**
+- **Inference Accuracy:** Evaluated real-time via `ml/metrics.json`
+- **Predictive Indexing:** Scaled from 0.0% to 100.0% confidence intervals.
 
-## 👨‍💻 Author
-**Deekshith G**
+## 📸 Intelligence Hub Preview
+![Dashboard Intelligence](docs/screenshots/dashboard.png)
+*Modern, high-fidelity Mission Control for institutional oversight.*
+
+![AI Inference](docs/screenshots/engine.png)
+*Neural engine visualizing the predictive intelligence flow.*
+
+## 👨‍💻 Author & Contributions
+Project architected and refined for professional portfolio presentation.
+**Author:** Deekshith G
+
+---
+> [!IMPORTANT]
+> This project includes a demo `db.sqlite3` with pre-configured faculty and student nodes for immediate evaluation and simulation purposes.

@@ -88,20 +88,24 @@
 
     <!-- Analytic Distribution -->
     <div class="col-md-4">
-        <div class="glass-panel p-4 h-100 mb-4">
-            <h5 class="mb-4 text-gradient">Performance Category Distribution</h5>
-            <div style="height: 250px;">
-                <canvas id="performancePieChart" 
-                        data-high="{{ performance_counts.high|default:0 }}" 
-                        data-average="{{ performance_counts.average|default:0 }}" 
-                        data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
-            </div>
-        </div>
-        
         <div class="glass-panel p-4 h-100">
-            <h5 class="mb-4 text-gradient">Top Student Performers</h5>
-            <div style="height: 250px;">
-                <canvas id="studentBarChart" data-students="{{ top_students_json }}"></canvas>
+            <h5 class="mb-4 text-gradient">Institutional Intelligence</h5>
+            
+            <div class="mb-5">
+                <h6 class="text-secondary text-uppercase small ls-wide mb-3">Performance Distribution</h6>
+                <div style="height: 200px;">
+                    <canvas id="performancePieChart" 
+                            data-high="{{ performance_counts.high|default:0 }}" 
+                            data-average="{{ performance_counts.average|default:0 }}" 
+                            data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-top border-white border-opacity-5">
+                <h6 class="text-secondary text-uppercase small ls-wide mb-3">Top Student Performers</h6>
+                <div style="height: 200px;">
+                    <canvas id="studentBarChart" data-students="{{ top_students_json }}"></canvas>
+                </div>
             </div>
         </div>
     </div>
