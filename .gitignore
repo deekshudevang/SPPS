@@ -1,10 +1,12 @@
-# Default .gitignore for Django Project
-*.log
-*.pyc
 __pycache__/
+*.pyc
 .env
+venv/
+*.log
 db.sqlite3-journal
 
-# Keep the following for demo portability:
-# !db.sqlite3
-# !ml/*.pkl
+# Professional README screenshots
+docs/*.png
+
+# Keep db.sqlite3 for demo transfer as per requirement
+!db.sqlite3

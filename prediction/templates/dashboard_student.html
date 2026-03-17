@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block page_title %}Student Intelligence{% endblock %}
+{% block page_title %}EduPredict AI | Student Intel{% endblock %}
 
 {% block content %}
 <!-- Student Performance Stat Grid -->
@@ -8,7 +8,7 @@
         <div class="glass-panel stat-card border-top border-primary border-4">
             <div class="stat-label">Projected Academic Index</div>
             <div class="stat-value text-accent">{{ prediction.predicted_score|default:"--" }}<span class="fs-4">%</span></div>
-            <div class="mt-2 small text-muted">Neural trajectory analysis</div>
+            <div class="mt-2 small text-secondary">Neural trajectory analysis</div>
         </div>
     </div>
     <div class="col-md-4">
@@ -17,14 +17,14 @@
             <div class="stat-value risk-{{ prediction.risk_level|default:'unknown' }}">
                 {{ prediction.get_risk_level_display|default:"Syncing..." }}
             </div>
-            <div class="mt-2 small text-muted">AI Verified v2.4</div>
+            <div class="mt-2 small text-secondary">AI Verified v2.4</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="glass-panel stat-card border-top border-info border-4">
             <div class="stat-label">Consistency Score</div>
             <div class="stat-value text-info">{% if academic_records %}8.4{% else %}--{% endif %}<span class="fs-4">/10</span></div>
-            <div class="mt-2 small text-muted">Engagement velocity</div>
+            <div class="mt-2 small text-secondary">Engagement velocity</div>
         </div>
     </div>
 </div>
@@ -103,14 +103,14 @@
                             </div>
                         </div>
                     </td>
-                    <td><span class="fw-bold">{{ record.internal_marks }}</span> <small class="text-muted">/ 50</small></td>
+                    <td><span class="fw-bold">{{ record.internal_marks }}</span> <small class="text-secondary">/ 50</small></td>
                     <td>
                         <div class="d-flex gap-1">
                             {% for i in "1234567890"|make_list %}
                                 {% if forloop.counter <= record.participation_level %}
                                     <i class="bi bi-circle-fill text-primary" style="font-size: 0.4rem;"></i>
                                 {% else %}
-                                    <i class="bi bi-circle text-muted opacity-25" style="font-size: 0.4rem;"></i>
+                                    <i class="bi bi-circle text-secondary opacity-25" style="font-size: 0.4rem;"></i>
                                 {% endif %}
                             {% endfor %}
                         </div>

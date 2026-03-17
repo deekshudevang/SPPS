@@ -45,8 +45,7 @@ def generate_data(n_samples=1000):
 def train_pipeline():
     print("Generating data...")
     df = generate_data()
-    os.makedirs('ml/datasets', exist_ok=True)
-    df.to_csv('ml/datasets/student_data.csv', index=False)
+    df.to_csv('ml/dataset.csv', index=False)
     
     X = df.drop('performance', axis=1)
     y = df['performance']

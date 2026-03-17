@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block page_title %}Faculty Hub{% endblock %}
+{% block page_title %}EduPredict AI | Teacher Hub{% endblock %}
 
 {% block content %}
 <!-- Institutional intelligence Stat Grid -->
@@ -8,7 +8,7 @@
         <div class="glass-panel stat-card border-top border-primary border-4">
             <div class="stat-label">Student Cohort</div>
             <div class="stat-value text-accent">{{ total_students }}</div>
-            <div class="mt-2 small text-muted">Active enrollments</div>
+            <div class="mt-2 small text-secondary">Active enrollments</div>
         </div>
     </div>
     <div class="col-md-3">
@@ -22,14 +22,14 @@
         <div class="glass-panel stat-card border-top border-emerald border-4">
             <div class="stat-label">High Fidelity</div>
             <div class="stat-value text-success">{{ performance_counts.high|default:0 }}</div>
-            <div class="mt-2 small text-muted">Peak performance</div>
+            <div class="mt-2 small text-secondary">Peak performance</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="glass-panel stat-card border-top border-warning border-4">
             <div class="stat-label">Avg Consistency</div>
             <div class="stat-value text-warning">{{ performance_counts.average|default:0 }}</div>
-            <div class="mt-2 small text-muted">Baseline stable</div>
+            <div class="mt-2 small text-secondary">Baseline stable</div>
         </div>
     </div>
 </div>
@@ -57,10 +57,10 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name={{ pred.student.user.username }}&background=rgba(59,130,246,0.1)&color=3b82f6" class="rounded-circle me-3" width="36">
+                                    <img src="https://ui-avatars.com/api/?name={{ pred.student.name }}&background=rgba(59,130,246,0.1)&color=3b82f6" class="rounded-circle me-3" width="36">
                                     <div>
-                                        <div class="fw-bold text-white">{{ pred.student.user.get_full_name }}</div>
-                                        <div class="small text-muted">{{ pred.student.student_id }} | {{ pred.student.department }}</div>
+                                        <div class="fw-bold text-white">{{ pred.student.name }}</div>
+                                        <div class="small text-secondary">{{ pred.student.student_id }} | {{ pred.student.department }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -71,10 +71,10 @@
                                 <div class="fw-bold text-accent">{{ pred.predicted_score|floatformat:1 }}%</div>
                             </td>
                             <td class="text-end">
-                                <button class="btn btn-link text-muted p-0 me-3" onclick="runPredict({{ pred.student.id }})" title="Recalibrate Prediction">
+                                <button class="btn btn-link text-secondary p-0 me-3" onclick="runPredict({{ pred.student.id }})" title="Recalibrate Prediction">
                                     <i class="bi bi-cpu fs-5"></i>
                                 </button>
-                                <a href="{% url 'analytics' %}" class="btn btn-link text-muted p-0">
+                                <a href="{% url 'analytics' %}" class="btn btn-link text-secondary p-0">
                                     <i class="bi bi-arrow-right-circle fs-5"></i>
                                 </a>
                             </td>
@@ -99,7 +99,7 @@
             <div class="mt-5">
                 <div class="p-3 mb-3 glass-panel" style="background: rgba(255,255,255,0.02);">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="small fw-bold text-muted">Engagement Index</span>
+                        <span class="small fw-bold text-secondary">Engagement Index</span>
                         <span class="small text-accent">85%</span>
                     </div>
                     <div class="progress" style="height: 4px; background: rgba(255,255,255,0.05);">
@@ -108,7 +108,7 @@
                 </div>
                 <div class="p-3 glass-panel" style="background: rgba(255,255,255,0.02);">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="small fw-bold text-muted">Attendance Vector</span>
+                        <span class="small fw-bold text-secondary">Attendance Vector</span>
                         <span class="small text-success">92%</span>
                     </div>
                     <div class="progress" style="height: 4px; background: rgba(255,255,255,0.05);">

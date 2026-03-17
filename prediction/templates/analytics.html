@@ -22,7 +22,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h5 class="mb-1 text-gradient">Engagement-Outcome Vector</h5>
-                    <p class="small text-muted mb-0">Attendance Rate vs. Predicted Academic Success</p>
+                    <p class="small text-secondary mb-0">Attendance Rate vs. Predicted Academic Success</p>
                 </div>
                 <div class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10">{{ total_analyzed }} Nodes Analyzed</div>
             </div>
@@ -41,7 +41,7 @@
                 {% for bracket, count in risk_brackets.items %}
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
-                        <span class="small fw-bold text-muted">{{ bracket }}</span>
+                        <span class="small fw-bold text-secondary">{{ bracket }}</span>
                         <span class="small text-accent">{{ count }} Students</span>
                     </div>
                     <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05);">

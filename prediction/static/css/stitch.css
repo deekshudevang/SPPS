@@ -104,6 +104,7 @@ h1, h2, h3, h4, h5, .brand {
 }
 
 .text-accent { color: var(--accent-blue); }
+.text-secondary { color: var(--text-secondary); }
 .text-success { color: var(--accent-emerald); }
 .text-danger { color: var(--accent-rose); }
 .text-warning { color: var(--accent-amber); }

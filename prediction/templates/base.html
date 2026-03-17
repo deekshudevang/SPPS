@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SPPS | Academic Intelligence{% endblock %}</title>
+    <title>{% block title %}EduPredict AI | Student Performance SaaS{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{% static 'css/stitch.css' %}">
@@ -22,22 +22,29 @@
     <div class="offcanvas-md offcanvas-start sidebar shadow-lg" tabindex="-1" id="sidebarOffcanvas">
         <div class="sidebar-brand mb-5">
             <img src="{% static 'institutional_logo.png' %}" class="me-2 shadow-sm rounded-2" style="width: 38px; height: 38px; object-fit: contain;">
-            <span class="text-gradient">SPPS</span>
+            <span class="text-gradient">EduPredict</span>
         </div>
         <nav class="flex-column gap-1">
             <a href="{% url 'dashboard_router' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_router' %}active{% endif %}">
                 <i class="bi bi-grid-1x2-fill"></i> Overview
             </a>
-            {% if user.role == 'faculty' or user.role == 'admin' %}
+            {% if user.role == 'teacher' or user.role == 'admin' %}
             <div class="px-3 mt-4 mb-2 small text-muted text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.1em;">Management</div>
             <a href="{% url 'add_record' %}" class="nav-link {% if request.resolver_match.url_name == 'add_record' %}active{% endif %}">
                 <i class="bi bi-file-earmark-plus-fill"></i> Data Intake
             </a>
-            <a href="{% url 'faculty_lab' %}" class="nav-link {% if request.resolver_match.url_name == 'faculty_lab' %}active{% endif %}">
-                <i class="bi bi-cpu-fill"></i> Faculty Lab
+            <a href="{% url 'teacher_lab' %}" class="nav-link {% if request.resolver_match.url_name == 'teacher_lab' %}active{% endif %}">
+                <i class="bi bi-cpu-fill"></i> Teacher Lab
             </a>
             <a href="{% url 'analytics' %}" class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">
                 <i class="bi bi-pie-chart-fill"></i> Analytics Hub
+            </a>
+            {% endif %}
+            
+            {% if user.is_pro %}
+            <div class="px-3 mt-4 mb-2 small text-accent text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.1em;">Pro Features</div>
+            <a href="#" class="nav-link text-accent">
+                <i class="bi bi-star-fill"></i> Advanced Insights
             </a>
             {% endif %}
             
@@ -59,7 +66,7 @@
         <header class="d-flex justify-content-between align-items-center mb-5">
             <div>
                 <h1 class="h3 mb-0 text-gradient">{% block page_title %}Workspace{% endblock %}</h1>
-                <p class="text-muted small mb-0">Institutional Intelligence Layer v2.0</p>
+                <p class="text-secondary small mb-0">EduPredict Intelligence Engine v1.0 • {{ user.get_student_limit }} Limit</p>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-link text-muted p-0"><i class="bi bi-search fs-5"></i></button>
@@ -73,7 +80,7 @@
                     </div>
                     <div class="d-none d-md-block">
                         <div class="small fw-bold lh-1 text-white">{{ user.get_full_name|default:user.username }}</div>
-                        <div class="text-accent fw-bold" style="font-size: 0.6rem; letter-spacing: 0.05em;">{{ user.role|upper }} SECURED</div>
+                        <div class="text-accent fw-bold" style="font-size: 0.6rem; letter-spacing: 0.05em;">{{ user.role|upper }} • {% if user.is_pro %}PRO{% else %}FREE{% endif %}</div>
                     </div>
                 </div>
             </div>

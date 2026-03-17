@@ -3,12 +3,22 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.http import JsonResponse, HttpResponse
-from .models import Student, AcademicRecord, Prediction, Feedback, User
+from accounts.models import User
+from students.models import Student, AcademicRecord, Prediction, Feedback
 from .predictor import Predictor
 import json
 import os
 
 predictor = Predictor()
+
+def get_smart_recommendation(score, risk_level):
+    if risk_level == 'at_risk':
+        return "Critical Protocol: Increase study hours to 6+ daily and focus on prerequisite revisions immediately."
+    elif risk_level == 'average':
+        return "Standard Protocol: Practice more consistently and participate in peer-led discussion groups."
+    else:
+        return "Optimized Protocol: You are performing at peak capacity. Maintain focus and consider mentoring peers."
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -34,13 +44,19 @@ def logout_view(request):
 
 @login_required
 def add_record(request):
-    if request.user.role not in ['faculty', 'admin']:
+    if request.user.role not in ['teacher', 'admin']:
         return redirect('dashboard_router')
     
     if request.method == 'POST':
+        # SaaS: Check student limit
+        if not request.user.is_pro:
+            count = Student.objects.filter(creator=request.user).count()
+            if count >= request.user.get_student_limit():
+                return HttpResponse("Student limit reached for Free plan. Upgrade to Pro for more.", status=403)
+        
         try:
             student_id = request.POST.get('student_id')
-            student = Student.objects.get(id=student_id)
+            student = Student.objects.get(id=student_id, creator=request.user)
             
             record = AcademicRecord.objects.create(
                 student=student,
@@ -63,11 +79,11 @@ def add_record(request):
                 risk_level=result_risk
             )
             
-            recommendation = predictor.get_recommendation(record, result_risk)
+            recommendation_text = get_smart_recommendation(result_score, result_risk)
             Feedback.objects.create(
                 student=student,
                 prediction=prediction,
-                recommendation=recommendation
+                recommendation=recommendation_text
             )
             
             return redirect('dashboard_router')
@@ -76,29 +92,29 @@ def add_record(request):
         except Exception as e:
             return HttpResponse(f"Error saving record: {e}", status=400)
             
-    students = Student.objects.all()
+    students = Student.objects.filter(creator=request.user)
     return render(request, 'add_record.html', {'students': students})
 
 from django.db.models import Avg, Count
 
 @login_required
 def analytics_view(request):
-    if request.user.role not in ['faculty', 'admin']:
+    if request.user.role not in ['teacher', 'admin']:
         return redirect('dashboard_router')
     
     # 1. Correlation Data: Attendance vs Predicted Score
-    predictions = Prediction.objects.select_related('student', 'academic_record').all()
+    predictions = Prediction.objects.filter(student__creator=request.user).select_related('student', 'academic_record')
     correlation_data = []
     for p in predictions:
         if p.academic_record:
             correlation_data.append({
                 'x': p.academic_record.attendance,
                 'y': p.predicted_score,
-                'label': p.student.user.get_full_name()
+                'label': p.student.name
             })
     
     # 2. Departmental Analytics
-    dept_stats = Student.objects.values('department').annotate(
+    dept_stats = Student.objects.filter(creator=request.user).values('department').annotate(
         avg_score=Avg('predictions__predicted_score'),
         student_count=Count('id')
     )
@@ -114,9 +130,9 @@ def analytics_view(request):
             
     # 4. Risk Breakdown by Attendance Brackets
     risk_brackets = {
-        'Low (<75%)': Prediction.objects.filter(academic_record__attendance__lt=75, risk_level='at_risk').count(),
-        'Moderate (75-85%)': Prediction.objects.filter(academic_record__attendance__range=(75, 85), risk_level='at_risk').count(),
-        'High (>85%)': Prediction.objects.filter(academic_record__attendance__gt=85, risk_level='at_risk').count(),
+        'Low (<75%)': Prediction.objects.filter(student__creator=request.user, academic_record__attendance__lt=75, risk_level='at_risk').count(),
+        'Moderate (75-85%)': Prediction.objects.filter(student__creator=request.user, academic_record__attendance__range=(75, 85), risk_level='at_risk').count(),
+        'High (>85%)': Prediction.objects.filter(student__creator=request.user, academic_record__attendance__gt=85, risk_level='at_risk').count(),
     }
 
     context = {
@@ -134,7 +150,7 @@ def settings_view(request):
 
 @login_required
 def lab_simulation(request):
-    if request.user.role not in ['faculty', 'admin']:
+    if request.user.role not in ['teacher', 'admin']:
         return redirect('dashboard_router')
     
     if request.method == 'POST':
@@ -164,13 +180,21 @@ def lab_simulation(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
             
-    return render(request, 'faculty_lab.html')
+    return render(request, 'teacher_lab.html')
 
-def get_institutional_metrics():
-    total_students = Student.objects.count()
-    at_risk_count = Prediction.objects.filter(risk_level='at_risk').count()
-    high_perf_count = Prediction.objects.filter(risk_level='high').count()
-    average_count = Prediction.objects.filter(risk_level='average').count()
+def get_institutional_metrics(user):
+    # Filter by creator for multi-tenancy, but if admin, show all
+    if user.role == 'admin':
+        students_qs = Student.objects.all()
+        predictions_qs = Prediction.objects.all()
+    else:
+        students_qs = Student.objects.filter(creator=user)
+        predictions_qs = Prediction.objects.filter(student__creator=user)
+        
+    total_students = students_qs.count()
+    at_risk_count = predictions_qs.filter(risk_level='at_risk').count()
+    high_perf_count = predictions_qs.filter(risk_level='high').count()
+    average_count = predictions_qs.filter(risk_level='average').count()
     
     performance_counts = {
         'at_risk': at_risk_count,
@@ -178,7 +202,7 @@ def get_institutional_metrics():
         'average': average_count
     }
     
-    dept_stats = list(Student.objects.values('department').annotate(
+    dept_stats = list(students_qs.values('department').annotate(
         avg_score=Avg('predictions__predicted_score'),
         student_count=Count('id')
     ).order_by('-avg_score'))
@@ -190,7 +214,7 @@ def admin_dashboard(request):
     if request.user.role != 'admin':
         return redirect('dashboard_router')
     
-    total_students, performance_counts, dept_stats = get_institutional_metrics()
+    total_students, performance_counts, dept_stats = get_institutional_metrics(request.user)
     
     # Load ML metrics and pre-calculate percentages
     metrics_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ml', 'models', 'metrics.json')
@@ -229,8 +253,8 @@ def admin_dashboard(request):
 def dashboard_router(request):
     if request.user.role == 'student':
         return redirect('student_dashboard')
-    elif request.user.role == 'faculty':
-        return redirect('faculty_dashboard')
+    elif request.user.role == 'teacher':
+        return redirect('admin_dashboard' if request.user.role == 'admin' else 'teacher_dashboard')
     elif request.user.role == 'admin':
         return redirect('admin_dashboard')
     else:
@@ -258,12 +282,12 @@ def student_dashboard(request):
 @never_cache
 @login_required
 def faculty_dashboard(request):
-    if request.user.role != 'faculty':
+    if request.user.role != 'teacher':
         return redirect('dashboard_router')
     
-    total_students, performance_counts, dept_stats = get_institutional_metrics()
-    students = Student.objects.all()
-    predictions = Prediction.objects.select_related('student', 'student__user').order_by('-created_at')
+    total_students, performance_counts, dept_stats = get_institutional_metrics(request.user)
+    students = Student.objects.filter(creator=request.user)
+    predictions = Prediction.objects.filter(student__creator=request.user).select_related('student').order_by('-created_at')
     
     context = {
         'total_students': total_students,
@@ -273,11 +297,11 @@ def faculty_dashboard(request):
         'students': students,
         'predictions': predictions
     }
-    return render(request, 'dashboard_faculty.html', context)
+    return render(request, 'dashboard_teacher.html', context)
 
 @login_required
 def run_prediction(request, student_id):
-    if request.user.role not in ['faculty', 'admin']:
+    if request.user.role not in ['teacher', 'admin']:
         return JsonResponse({'error': 'Unauthorized'}, status=403)
     
     student = Student.objects.get(id=student_id)
@@ -304,7 +328,7 @@ def run_prediction(request, student_id):
         risk_level=result['risk_level']
     )
     
-    rec_text = predictor.get_recommendation(data, result['risk_level'])
+    rec_text = get_smart_recommendation(result['predicted_score'], result['risk_level'])
     Feedback.objects.create(
         student=student,
         prediction=prediction,
