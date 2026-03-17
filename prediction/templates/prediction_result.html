@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block page_title %}Predictive Intelligence | Result Output{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-in">
+    <div class="col-md-7">
+        <div class="glass-panel p-5 text-center box-glow border-top border-4 {% if prediction.predicted_score < 40 %}border-danger{% elif prediction.predicted_score <= 70 %}border-warning{% else %}border-success{% endif %}">
+            <div class="mb-4">
+                <i class="bi bi-cpu-fill display-1 {% if prediction.predicted_score < 40 %}text-danger{% elif prediction.predicted_score <= 70 %}text-warning{% else %}text-success{% endif %} opacity-50"></i>
+            </div>
+            
+            <h2 class="text-white mb-2">Neural Inference Result</h2>
+            <p class="text-secondary small text-uppercase ls-wide mb-5">Institutional Profile: {{ prediction.student.name }} ({{ prediction.student.student_id }})</p>
+            
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="p-4 rounded-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="small text-secondary text-uppercase fw-bold ls-wide mb-2">Predicted Score</div>
+                        <div class="display-4 fw-bold {% if prediction.predicted_score < 40 %}text-danger{% elif prediction.predicted_score <= 70 %}text-warning{% else %}text-success{% endif %}">
+                            {{ prediction.predicted_score|floatformat:1 }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-4 rounded-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="small text-secondary text-uppercase fw-bold ls-wide mb-2">Risk Classification</div>
+                        <div class="display-4 fw-bold text-uppercase" style="font-size: 1.8rem; margin-top: 0.8rem;">
+                             <span class="risk-badge risk-{{ prediction.risk_level }} fs-3">{{ prediction.get_risk_level_display }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card bg-dark border-opacity-10 border-white text-start p-4 mb-5 shadow-sm">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="p-2 rounded-circle bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="bi bi-lightbulb-fill fs-4"></i>
+                    </div>
+                    <h5 class="mb-0 text-white">AI Recommendation</h5>
+                </div>
+                <p class="lead mb-0 {% if prediction.predicted_score < 40 %}text-danger{% elif prediction.predicted_score <= 70 %}text-warning{% else %}text-success{% endif %} fw-bold" style="font-size: 1.1rem;">
+                    {{ feedback.recommendation }}
+                </p>
+            </div>
+            
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'dashboard_router' %}" class="btn btn-stitch px-5">Back to Dashboard</a>
+                <a href="{% url 'analytics' %}" class="btn btn-outline-secondary px-5">Detailed Analytics</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

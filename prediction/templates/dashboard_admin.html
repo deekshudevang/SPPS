@@ -20,9 +20,9 @@
     </div>
     <div class="col-md-3">
         <div class="glass-panel stat-card border-top border-success border-4">
-            <div class="stat-label">Predictive Velocity</div>
-            <div class="stat-value text-success">98.2<span class="fs-4">%</span></div>
-            <div class="mt-2 small text-secondary"><i class="bi bi-cpu-fill me-1"></i> Engine Confidence</div>
+            <div class="stat-label">Mean Cohort Score</div>
+            <div class="stat-value text-success">{{ avg_score|default:"0.0" }}%</div>
+            <div class="mt-2 small text-secondary"><i class="bi bi-graph-up-arrow me-1"></i> Performance Baseline</div>
         </div>
     </div>
     <div class="col-md-3">
@@ -49,54 +49,24 @@
             </div>
             
             <div class="row g-4 align-items-center">
-                <div class="col-md-5">
-                    <div class="position-relative py-3">
-                        <canvas id="riskDoughnut" 
-                                data-high="{{ performance_counts.high|default:0 }}" 
-                                data-average="{{ performance_counts.average|default:0 }}" 
-                                data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
-                        <div class="position-absolute top-50 start-50 translate-middle text-center">
-                            <div class="h3 mb-0 text-white fw-bold">{{ total_students }}</div>
-                            <div class="text-secondary" style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.1em;">Total Nodes</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-7">
-                    <div class="d-flex flex-column gap-2">
-                        <!-- Critical First -->
-                        <div class="glass-panel-strong p-3 rounded-3 border-start border-4 border-danger hover-glow">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="small fw-bold text-danger text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Critical At-Risk</div>
-                                <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size: 0.6rem;">{{ performance_percentages.at_risk|floatformat:1 }}%</span>
-                            </div>
-                            <div class="h4 mb-2 text-white" style="font-family: 'Outfit', sans-serif;">{{ performance_counts.at_risk|default:0 }} <span class="small text-secondary fs-6" style="font-size: 0.7rem !important;">Students</span></div>
-                            <div class="progress" style="height: 3px; background: rgba(255,255,255,0.03);">
-                                <div class="progress-bar bg-danger shadow-glow-danger" style="width: {{ performance_percentages.at_risk }}%"></div>
+                <div class="col-md-12">
+                     <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-secondary text-uppercase small ls-wide mb-3">Performance Pie</h6>
+                            <div style="height: 200px;">
+                                <canvas id="performancePieChart" 
+                                        data-high="{{ performance_counts.high|default:0 }}" 
+                                        data-average="{{ performance_counts.average|default:0 }}" 
+                                        data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
                             </div>
                         </div>
-
-                        <div class="glass-panel-strong p-3 rounded-3 border-start border-4 border-warning hover-glow">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="small fw-bold text-warning text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Average Consistency</div>
-                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 0.6rem;">{{ performance_percentages.average|floatformat:1 }}%</span>
-                            </div>
-                            <div class="h4 mb-2 text-white" style="font-family: 'Outfit', sans-serif;">{{ performance_counts.average|default:0 }} <span class="small text-secondary fs-6" style="font-size: 0.7rem !important;">Students</span></div>
-                            <div class="progress" style="height: 3px; background: rgba(255,255,255,0.03);">
-                                <div class="progress-bar bg-warning" style="width: {{ performance_percentages.average }}%"></div>
+                        <div class="col-md-6">
+                            <h6 class="text-secondary text-uppercase small ls-wide mb-3">Top Talent Analysis</h6>
+                            <div style="height: 200px;">
+                                <canvas id="studentBarChart" data-students="{{ top_students_json }}"></canvas>
                             </div>
                         </div>
-                        
-                        <div class="glass-panel-strong p-3 rounded-3 border-start border-4 border-success hover-glow">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="small fw-bold text-success text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">High Performers</div>
-                                <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.6rem;">{{ performance_percentages.high|floatformat:1 }}%</span>
-                            </div>
-                            <div class="h4 mb-2 text-white" style="font-family: 'Outfit', sans-serif;">{{ performance_counts.high|default:0 }} <span class="small text-secondary fs-6" style="font-size: 0.7rem !important;">Students</span></div>
-                            <div class="progress" style="height: 3px; background: rgba(255,255,255,0.03);">
-                                <div class="progress-bar bg-success" style="width: {{ performance_percentages.high }}%"></div>
-                            </div>
-                        </div>
-                    </div>
+                     </div>
                 </div>
             </div>
 
@@ -260,28 +230,76 @@
 
 {% block extra_js %}
 <script>
-const riskCanvas = document.getElementById('riskDoughnut');
-const ctx = riskCanvas.getContext('2d');
-new Chart(ctx, {
-    type: 'doughnut',
+// Performance Pie Chart
+const pieCtx = document.getElementById('performancePieChart').getContext('2d');
+const pieData = document.getElementById('performancePieChart').dataset;
+new Chart(pieCtx, {
+    type: 'pie',
     data: {
         labels: ['High', 'Average', 'At Risk'],
         datasets: [{
-            data: [
-                riskCanvas.dataset.high,
-                riskCanvas.dataset.average,
-                riskCanvas.dataset.atRisk
-            ],
+            data: [pieData.high, pieData.average, pieData.atRisk],
             backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
-            borderWidth: 0,
-            hoverOffset: 15
+            borderWidth: 0
         }]
     },
     options: {
-        cutout: '80%',
         responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#94a3b8', usePointStyle: true } }
+        }
+    }
+});
+
+// Top Students Bar Chart
+const barCtx = document.getElementById('studentBarChart').getContext('2d');
+const studentsData = JSON.parse(document.getElementById('studentBarChart').dataset.students);
+new Chart(barCtx, {
+    type: 'bar',
+    data: {
+        labels: studentsData.map(s => s.name),
+        datasets: [{
+            label: 'Score %',
+            data: studentsData.map(s => s.score),
+            backgroundColor: '#3b82f6',
+            borderRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+        },
         plugins: { legend: { display: false } }
     }
 });
+
+// Original Doughnut (for backward compatibility or extra view)
+const riskCanvas = document.getElementById('riskDoughnut');
+if (riskCanvas) {
+    const ctx = riskCanvas.getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['High', 'Average', 'At Risk'],
+            datasets: [{
+                data: [
+                    riskCanvas.dataset.high,
+                    riskCanvas.dataset.average,
+                    riskCanvas.dataset.atRisk
+                ],
+                backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                borderWidth: 0,
+                hoverOffset: 15
+            }]
+        },
+        options: {
+            cutout: '80%',
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
 </script>
 {% endblock %}

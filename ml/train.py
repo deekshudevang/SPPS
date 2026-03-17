@@ -1,16 +1,14 @@
+from sklearn.pipeline import Pipeline
+import pickle
+import json
+import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, precision_recall_fscore_support
-import pickle
-import json
-import os
 
-# Create synthetic data
+# Create synthetic data for demo purposes
 def generate_data(n_samples=1000):
     np.random.seed(42)
     data = {
@@ -23,6 +21,7 @@ def generate_data(n_samples=1000):
     }
     df = pd.DataFrame(data)
     
+    # Heuristic scoring logic for labels
     score = (
         0.3 * df['attendance'] + 
         0.2 * df['internal_marks'] * 2 + 
@@ -41,65 +40,62 @@ def generate_data(n_samples=1000):
     df['performance'] = pd.Series(score).apply(classify)
     return df
 
-# Main pipeline
 def train_pipeline():
-    print("Generating data...")
+    """
+    Trains the model using a scikit-learn Pipeline and saves to a unified pkl file.
+    """
+    print("Initializing professional training pipeline...")
     df = generate_data()
+    
+    # Ensure ml directory exists
+    os.makedirs('ml', exist_ok=True)
     df.to_csv('ml/dataset.csv', index=False)
     
     X = df.drop('performance', axis=1)
     y = df['performance']
     
+    # We serialize the LabelEncoder separately as it's for the target, 
+    # but the features go through the Pipeline.
     le = LabelEncoder()
     y_encoded = le.fit_transform(y)
     
     X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
     
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    # Define a professional Pipeline
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))
+    ])
     
-    models = {
-        'LogisticRegression': LogisticRegression(max_iter=1000),
-        'DecisionTree': DecisionTreeClassifier(),
-        'RandomForest': RandomForestClassifier(n_estimators=100)
-    }
+    print("Fitting Random Forest Pipeline...")
+    pipeline.fit(X_train, y_train)
     
-    os.makedirs('ml/models', exist_ok=True)
-    report_data = {}
-
-    for name, model in models.items():
-        print(f"Training {name}...")
-        model.fit(X_train_scaled, y_train)
-        y_pred = model.predict(X_test_scaled)
-        
-        acc = accuracy_score(y_test, y_pred)
-        precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='weighted')
-        
-        report_data[name] = {
+    # Calculate performance metrics for the portfolio dashboard
+    y_pred = pipeline.predict(X_test)
+    from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+    acc = accuracy_score(y_test, y_pred)
+    precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='weighted')
+    
+    metrics_report = {
+        'RandomForest': {
             'accuracy': round(acc, 4),
             'precision': round(precision, 4),
             'recall': round(recall, 4),
             'f1_score': round(f1, 4)
         }
-        
-        print(f"{name} Accuracy: {acc:.4f}")
-        
-        with open(f'ml/models/{name.lower()}_model.pkl', 'wb') as f:
-            pickle.dump(model, f)
+    }
     
-    with open('ml/models/scaler.pkl', 'wb') as f:
-        pickle.dump(scaler, f)
-    with open('ml/models/label_encoder.pkl', 'wb') as f:
+    # Save unified model and auxiliary files
+    with open('ml/model.pkl', 'wb') as f:
+        pickle.dump(pipeline, f)
+    
+    with open('ml/label_encoder.pkl', 'wb') as f:
         pickle.dump(le, f)
         
-    with open('ml/models/metrics.json', 'w') as f:
-        json.dump(report_data, f, indent=4)
+    with open('ml/metrics.json', 'w') as f:
+        json.dump(metrics_report, f, indent=4)
         
-    print("Pipeline completed. Models and metrics saved.")
-
-if __name__ == "__main__":
-    train_pipeline()
+    print("Model and metrics successfully saved to ml/")
 
 if __name__ == "__main__":
     train_pipeline()

@@ -20,16 +20,16 @@
     </div>
     <div class="col-md-3">
         <div class="glass-panel stat-card border-top border-emerald border-4">
-            <div class="stat-label">High Fidelity</div>
-            <div class="stat-value text-success">{{ performance_counts.high|default:0 }}</div>
-            <div class="mt-2 small text-secondary">Peak performance</div>
+            <div class="stat-label">Avg Institutional Score</div>
+            <div class="stat-value text-success">{{ avg_score|default:"0.0" }}%</div>
+            <div class="mt-2 small text-secondary">Cohort performance</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="glass-panel stat-card border-top border-warning border-4">
-            <div class="stat-label">Avg Consistency</div>
-            <div class="stat-value text-warning">{{ performance_counts.average|default:0 }}</div>
-            <div class="mt-2 small text-secondary">Baseline stable</div>
+            <div class="stat-label">System Consistency</div>
+            <div class="stat-value text-warning">{% widthratio performance_counts.average total_students 100 %}%</div>
+            <div class="mt-2 small text-secondary">Baseline stability</div>
         </div>
     </div>
 </div>
@@ -88,33 +88,20 @@
 
     <!-- Analytic Distribution -->
     <div class="col-md-4">
-        <div class="glass-panel p-4 h-100">
-            <h5 class="mb-4 text-gradient">Institutional Distribution</h5>
-            <div style="height: 280px;">
-                <canvas id="riskChart" 
+        <div class="glass-panel p-4 h-100 mb-4">
+            <h5 class="mb-4 text-gradient">Performance Category Distribution</h5>
+            <div style="height: 250px;">
+                <canvas id="performancePieChart" 
                         data-high="{{ performance_counts.high|default:0 }}" 
                         data-average="{{ performance_counts.average|default:0 }}" 
                         data-at-risk="{{ performance_counts.at_risk|default:0 }}"></canvas>
             </div>
-            <div class="mt-5">
-                <div class="p-3 mb-3 glass-panel" style="background: rgba(255,255,255,0.02);">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="small fw-bold text-secondary">Engagement Index</span>
-                        <span class="small text-accent">85%</span>
-                    </div>
-                    <div class="progress" style="height: 4px; background: rgba(255,255,255,0.05);">
-                        <div class="progress-bar bg-accent" style="width: 85%"></div>
-                    </div>
-                </div>
-                <div class="p-3 glass-panel" style="background: rgba(255,255,255,0.02);">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="small fw-bold text-secondary">Attendance Vector</span>
-                        <span class="small text-success">92%</span>
-                    </div>
-                    <div class="progress" style="height: 4px; background: rgba(255,255,255,0.05);">
-                        <div class="progress-bar bg-success" style="width: 92%"></div>
-                    </div>
-                </div>
+        </div>
+        
+        <div class="glass-panel p-4 h-100">
+            <h5 class="mb-4 text-gradient">Top Student Performers</h5>
+            <div style="height: 250px;">
+                <canvas id="studentBarChart" data-students="{{ top_students_json }}"></canvas>
             </div>
         </div>
     </div>
@@ -131,32 +118,49 @@ async function runPredict(studentId) {
     }
 }
 
-const riskCanvas = document.getElementById('riskChart');
-const ctx = riskCanvas.getContext('2d');
-new Chart(ctx, {
-    type: 'doughnut',
+// Pie Chart
+const pieCtx = document.getElementById('performancePieChart').getContext('2d');
+const pieData = document.getElementById('performancePieChart').dataset;
+new Chart(pieCtx, {
+    type: 'pie',
     data: {
         labels: ['High', 'Average', 'At Risk'],
         datasets: [{
-            data: [
-                riskCanvas.dataset.high,
-                riskCanvas.dataset.average,
-                riskCanvas.dataset.atRisk
-            ],
+            data: [pieData.high, pieData.average, pieData.atRisk],
             backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
-            borderWidth: 0,
-            hoverOffset: 15
+            borderWidth: 0
         }]
     },
     options: {
-        cutout: '80%',
         responsive: true,
-        plugins: { 
-            legend: { 
-                display: true,
-                position: 'bottom',
-                labels: { color: '#94a3b8', padding: 20, usePointStyle: true }
-            } 
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#94a3b8', usePointStyle: true } }
+        }
+    }
+});
+
+// Bar Chart
+const barCtx = document.getElementById('studentBarChart').getContext('2d');
+const studentsData = JSON.parse(document.getElementById('studentBarChart').dataset.students);
+new Chart(barCtx, {
+    type: 'bar',
+    data: {
+        labels: studentsData.map(s => s.name),
+        datasets: [{
+            label: 'Score %',
+            data: studentsData.map(s => s.score),
+            backgroundColor: '#3b82f6',
+            borderRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+        },
+        plugins: {
+            legend: { display: false }
         }
     }
 });

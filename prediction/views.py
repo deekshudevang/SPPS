@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
+from django.db.models import Avg, Count
 from django.http import JsonResponse, HttpResponse
 from accounts.models import User
 from students.models import Student, AcademicRecord, Prediction, Feedback
@@ -11,13 +12,6 @@ import os
 
 predictor = Predictor()
 
-def get_smart_recommendation(score, risk_level):
-    if risk_level == 'at_risk':
-        return "Critical Protocol: Increase study hours to 6+ daily and focus on prerequisite revisions immediately."
-    elif risk_level == 'average':
-        return "Standard Protocol: Practice more consistently and participate in peer-led discussion groups."
-    else:
-        return "Optimized Protocol: You are performing at peak capacity. Maintain focus and consider mentoring peers."
 
 
 def login_view(request):
@@ -79,14 +73,17 @@ def add_record(request):
                 risk_level=result_risk
             )
             
-            recommendation_text = get_smart_recommendation(result_score, result_risk)
-            Feedback.objects.create(
+            recommendation_text = predictor.get_recommendation(result_score)
+            feedback = Feedback.objects.create(
                 student=student,
                 prediction=prediction,
                 recommendation=recommendation_text
             )
             
-            return redirect('dashboard_router')
+            return render(request, 'prediction_result.html', {
+                'prediction': prediction,
+                'feedback': feedback
+            })
         except Student.DoesNotExist:
             return HttpResponse("Error: Student not found.", status=404)
         except Exception as e:
@@ -169,7 +166,7 @@ def lab_simulation(request):
             )
             
             risk, score = predictor.predict(record)
-            recommendation = predictor.get_recommendation(record, risk)
+            recommendation = predictor.get_recommendation(score)
             
             return JsonResponse({
                 'status': 'success',
@@ -196,10 +193,19 @@ def get_institutional_metrics(user):
     high_perf_count = predictions_qs.filter(risk_level='high').count()
     average_count = predictions_qs.filter(risk_level='average').count()
     
+    avg_score = predictions_qs.aggregate(Avg('predicted_score'))['predicted_score__avg'] or 0
+    
+    # For the bar chart: Top 5 students by score
+    top_students = predictions_qs.select_related('student').order_by('-predicted_score')[:5]
+    top_students_data = [
+        {'name': p.student.name, 'score': round(p.predicted_score, 1)} 
+        for p in top_students
+    ]
+    
     performance_counts = {
         'at_risk': at_risk_count,
-        'high': high_perf_count,
-        'average': average_count
+        'average': average_count,
+        'high': high_perf_count
     }
     
     dept_stats = list(students_qs.values('department').annotate(
@@ -207,43 +213,49 @@ def get_institutional_metrics(user):
         student_count=Count('id')
     ).order_by('-avg_score'))
     
-    return total_students, performance_counts, dept_stats
+    return {
+        'total_students': total_students,
+        'performance_counts': performance_counts,
+        'avg_score': round(avg_score, 1),
+        'top_students_json': json.dumps(top_students_data),
+        'predictions': predictions_qs.select_related('student')[:10],  # Limit for dashboard
+        'dept_stats': dept_stats
+    }
 
 @login_required
 def admin_dashboard(request):
     if request.user.role != 'admin':
         return redirect('dashboard_router')
     
-    total_students, performance_counts, dept_stats = get_institutional_metrics(request.user)
+    metrics_data = get_institutional_metrics(request.user)
     
     # Load ML metrics and pre-calculate percentages
-    metrics_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ml', 'models', 'metrics.json')
+    metrics_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ml', 'metrics.json')
     ml_metrics = {}
     if os.path.exists(metrics_path):
-        with open(metrics_path, 'r') as f:
+        with open(metrics_path, 'r', encoding='utf-8') as f:
             raw_metrics = json.load(f)
-            for name, metrics in raw_metrics.items():
-                acc = metrics.get('accuracy') or metrics.get('precision') or 0
+            for name, m in raw_metrics.items():
+                acc = m.get('accuracy') or m.get('precision') or 0
                 ml_metrics[name] = {
                     'accuracy': f"{acc*100:.1f}%",
-                    'precision': f"{metrics.get('precision', 0)*100:.1f}%",
-                    'recall': f"{metrics.get('recall', 0)*100:.1f}%",
-                    'f1_score': f"{metrics.get('f1_score', 0)*100:.1f}%",
-                    'precision_raw': metrics.get('precision', 0) * 100
+                    'precision': f"{m.get('precision', 0)*100:.1f}%",
+                    'recall': f"{m.get('recall', 0)*100:.1f}%",
+                    'f1_score': f"{m.get('f1_score', 0)*100:.1f}%",
+                    'precision_raw': m.get('precision', 0) * 100
                 }
             
     # Calculate percentages for Risk Matrix
-    total_perf = sum(performance_counts.values()) or 1
+    perf_counts = metrics_data['performance_counts']
+    total_perf = sum(perf_counts.values()) or 1
     performance_percentages = {
-        k: (v / total_perf) * 100 for k, v in performance_counts.items()
+        k: (v / total_perf) * 100 for k, v in perf_counts.items()
     }
 
     context = {
-        'total_students': total_students,
-        'performance_counts': performance_counts,
+        **metrics_data,
         'performance_percentages': performance_percentages,
-        'at_risk_count': performance_counts['at_risk'],
-        'dept_stats': dept_stats,
+        'at_risk_count': perf_counts['at_risk'],
         'ml_metrics': ml_metrics
     }
     return render(request, 'dashboard_admin.html', context)
@@ -285,17 +297,14 @@ def faculty_dashboard(request):
     if request.user.role != 'teacher':
         return redirect('dashboard_router')
     
-    total_students, performance_counts, dept_stats = get_institutional_metrics(request.user)
+    metrics_data = get_institutional_metrics(request.user)
     students = Student.objects.filter(creator=request.user)
-    predictions = Prediction.objects.filter(student__creator=request.user).select_related('student').order_by('-created_at')
+    # Using Predictions filtered by the metrics logic
     
     context = {
-        'total_students': total_students,
-        'performance_counts': performance_counts,
-        'at_risk_count': performance_counts['at_risk'],
-        'dept_stats': dept_stats,
+        **metrics_data,
+        'at_risk_count': metrics_data['performance_counts']['at_risk'],
         'students': students,
-        'predictions': predictions
     }
     return render(request, 'dashboard_teacher.html', context)
 
@@ -328,7 +337,7 @@ def run_prediction(request, student_id):
         risk_level=result['risk_level']
     )
     
-    rec_text = get_smart_recommendation(result['predicted_score'], result['risk_level'])
+    rec_text = predictor.get_recommendation(result['predicted_score'])
     Feedback.objects.create(
         student=student,
         prediction=prediction,
