@@ -52,11 +52,6 @@ def add_record(request):
         return redirect('dashboard_router')
     
     if request.method == 'POST':
-        # SaaS Multi-tenancy: Check student enrollment limits
-        if not request.user.is_pro:
-            count = Student.objects.filter(creator=request.user).count()
-            if count >= request.user.get_student_limit():
-                return HttpResponse("SaaS Status: Student limit reached for Free plan. Please upgrade to Pro.", status=403)
         
         try:
             student_id = request.POST.get('student_id')

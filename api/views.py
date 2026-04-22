@@ -11,12 +11,6 @@ class StudentViewSet(viewsets.ModelViewSet):
         return Student.objects.filter(creator=self.request.user)
 
     def perform_create(self, serializer):
-        # SaaS: Check student limit before allowing creation
-        limit = self.request.user.get_student_limit()
-        count = Student.objects.filter(creator=self.request.user).count()
-        if count >= limit:
-            from rest_framework.exceptions import ValidationError
-            raise ValidationError(f"Student limit reached for your plan ({limit}). Upgrade to Pro for more.")
         
         serializer.save(creator=self.request.user)
 

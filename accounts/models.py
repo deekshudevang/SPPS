@@ -13,7 +13,7 @@ class User(AbstractUser):
     is_pro = models.BooleanField(default=False)
     
     def get_student_limit(self):
-        return 1000 if self.is_pro else 5
+        return 1000000  # Limits removed as per request
 
 class Subscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
